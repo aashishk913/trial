@@ -1,87 +1,113 @@
+#include "inc/hangman.h"
 #include<stdio.h>
-#include<conio.h>
+#include<stdlib.h>
 #include<string.h>
+#include<time.h>
+#include<ctype.h>
 
-void main()
+int chances=0;
+
+char* update_word(char* temp_word,char* word,char guessed_letter);
+int (*fparr[5])();
+
+
+int main()
 {
-int i,j,c,count=0,ans=0,flag=0,*ptr;
-char a[1][6]={"dogodo"};
+   int n;
+   char guessed_letter,word[50],temp_word[50];
+   int guessed_arr[26]={0};
 
-char b[10],alpha;
-char d='_';
-clrscr();
-c=strlen(&a[0][0]);
-//printf("\n\t\t**************\n\n\t\t\t");
-printf("\n\n\t\t\t ** HANGMAN ** \n");
-	printf("\n\t\t\t**************\t\t\t");
-		printf("\n\t\t\t..............\n\n\t\t\t  ");
-for(j=0;j<c;j++)
-	  { printf("%c ",d);
-	  b[j]=d;}
-	  //printf("\n\n\t\t*****************");
-	  printf("\n\n\t\t\t..............\t\t\t");
-		printf("\n\n\t\t\t**************");
-// for(j=0;j<c;j++) printf("\n %c",b[j]); //{	   ptr=&b[j];
-	 //  printf("\n %c",*ptr); }
+   fparr[0]=sketch_one;
+   fparr[1]=sketch_two;
+   fparr[2]=sketch_three;
+   fparr[3]=sketch_four;
+   fparr[4]=sketch_five;
+   int choice;
+   char name[75];
+   label: printf("\nEnter the category to get the words from: 1) Animals, 2) Movies, 3) Places  : ");
+   scanf("%d",&choice);
+   if(choice==1){
+      strcpy(name,"animals.txt");
+   }
+   else if(choice==2){
+      strcpy(name,"movies.txt");
+   }
+   else if(choice==3){
+      strcpy(name,"places.txt");
+   }
+   int line_count;
+   if(choice>0 && choice<4)
+      line_count = count_lines(name);
+   else {
+       printf("\nInvalid choice");
+       goto label;
+    }
+   srand(time(0));
+   n=(rand()%line_count)+1;
+   printf("%d",n);
+   strcpy(word,retrieve_word(n,word,name));
+   printf("\nThe word is %s",word);
+   printf("\n%d %s\n",strlen(word),word);
+   int i=0;
+   while(i<strlen(word)){
+      if(isalpha(word[i])){
+         temp_word[i]='_';
+      }
+      else{
+         temp_word[i]=word[i];
+      }
+      i++;
+   
+   }
+   temp_word[strlen(word)]='\0';
+   
+   while(chances<5)
+  {  
+      guess: if(chances==0)  printf("\n%s\n",temp_word);
+      printf("\nEnter a letter to guess the word: ");
+      scanf(" %c",&guessed_letter);
+      guessed_letter=tolower(guessed_letter);
+      if(isalpha(guessed_letter)==0)
+      {
+         printf("Invalid entry. Try an alphabet\n");
+         continue;
+      }
+      if(guessed_arr[(int)guessed_letter-97]!=1){
+         guessed_arr[(int)guessed_letter-97]=1;
+         strcpy(temp_word,update_word(temp_word,word,guessed_letter));
+      }
+      else {
+         printf("\nYou have already tried this letter.. Try another one");
+         goto guess;
+      }
+      
+      if(strcmp(temp_word,word)==0)
+      {
+         printf("CONGRATULATIONS!!! You have guessed the word correctly\n");
+         return 0;
+      }
+   }
+   printf("You have lost all the chances. The man is hanged! \nThe correct word is %s",word);
+   return 0;
+}
 
-while (count<6)//||(ans<c))
- {
- flag=0;
-	   printf("\n\n\n\n\n\n\t enter a char");
-		alpha=getche();
-	  //	printf("%c",alpha);
-		for(i=0;i<c;i++)
-		{
-			if (alpha==a[0][i])
-		   {	b[i]=a[0][i];
-		   flag=1;
-			ans++; }
-			//else if(b[i]!=d) b[i]=a[0][i];
-			//else b[i]=d;
-		   //	printf("\n u r correct");  }
-		   //	if(ans==c) goto man; }
-			//printf("\n ans=%d",ans);}
-
-			//printf("\n count=%d",count);
-
-		}
-
-
-		clrscr();
-		printf("\n\n\t\t\t ** HANGMAN ** \n");
-		printf("\n\t\t\t**************\t\t\t");
-		printf("\n\t\t\t..............\n\n\t\t\t  ");
-		for(i=0;i<c;i++)
-		printf("%c ",b[i]);
-		printf("\n\n\t\t\t..............\t\t\t");
-		printf("\n\n\t\t\t**************");
-
-		if(flag==0)
-		{count++;
-		printf("\n\n\n\n\t\t%c is a wrong guess",alpha);
-		printf("\n\n\t\t (u have %d more guesses)",6-count);}
-
-		else{
-		printf("\n\n\t\t u r correct!!");
-	   printf("\n\t\t( u have %d more words to go)",c-ans);}
-	   //	printf("\n ans=%d",ans);
-	   //	printf("\n count=%d",count);
-		if(ans==c) break;
- }
- if(ans==c) printf("\n\n\n\t you won");
- else printf("\n\n\n\t\t  u lose.\n\n \t\t **SORRY  U R HANGED**");
-
-	  /*	if(output[i]!='_')
-		output[i]=a[0][i];
-		elseif(b[j]==a[0][i])
-		output[i]==a[0][i];
-		else
-		output[i]='_';
-		}
-		for(i=0;i<c;i++)
-		printf("%c",output[i])
-
- }      */
-getch();
-
+char* update_word(char* temp_word,char* word,char guessed_letter)
+{   
+    int count=0;
+    for(int i=0;i<strlen(word);i++)
+    {
+       if(word[i]==toupper(guessed_letter) || word[i]== tolower(guessed_letter))
+       {
+          temp_word[i]=word[i];
+          count++;
+       }
+    }
+    printf("The current state of the word: %s\n",temp_word);
+    if(count==0)
+    {
+       fparr[chances]();
+       chances++;
+       printf("You have more %d chances\n",(5-chances));
+    }
+    return temp_word;
 }
